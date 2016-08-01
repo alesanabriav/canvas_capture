@@ -15,18 +15,30 @@
     </div>
   </div>
   <div class="container">
-    <button id="capture">Capture</button>
+
   <div class="form-group">
     <label for="">Red</label>
     <input step="0.1" min="0" max="1" type="range" id="preset-red">
   </div>
+
   <div class="form-group">
     <label for="">Green</label>
     <input step="0.1" min="0" max="1" type="range" id="preset-green">
   </div>
+
   <div class="form-group">
     <label for="">Blue</label>
     <input step="0.1" min="0" max="1" type="range" id="preset-blue">
+  </div>
+
+  <div class="form-group">
+    <label for="">Gradient Color</label>
+    <input type="text" id="preset-gradient-color-0" placeholder="color 1">
+  </div>
+
+  <div class="form-group">
+    <label for="">Gradient Color</label>
+    <input type="text" id="preset-gradient-color-1" placeholder="color 2">
   </div>
 
   <div class="form-group">
@@ -34,14 +46,19 @@
     <input step="10" min="0" max="200" type="range" id="preset-gradient">
   </div>
 
+  <div class="form-group">
+    <button id="capture" class="btn">Capture</button>
+  </div>
+
   </div>
 
 <script>
+  //bases
+  const video = document.querySelector("#videoElement");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext('2d');
 
-  var video = document.querySelector("#videoElement");
-  var canvas = document.getElementById("canvas");
-  var ctx = canvas.getContext('2d');
-
+//get video
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
  
 if (navigator.getUserMedia) {      
@@ -49,7 +66,7 @@ if (navigator.getUserMedia) {      
 }
  
 function handleVideo(stream) {
-    video.src = window.URL.createObjectURL(stream);
+   video.src = window.URL.createObjectURL(stream);
   video.play();
 }
  
@@ -58,25 +75,19 @@ function videoError(e) {
 }
 
 
-document.getElementById('capture').addEventListener('click', function(e) {
-  getCapture();
-});
+  //presets default
+  let presetRed = 1;
+  let presetGreen = 1;
+  let presetBlue = 1;
+  let presetGradient = 0;
+  let presetGradientColor0 = "blue";
+  let presetGradientColor1 = "red";
 
-function getColor(range) {
-  ctx.globalCompositeOperation = "overlay";
-  range = range ? parseInt(range) : 0;
-  var grd = ctx.createRadialGradient(range, range, canvas.width, range, 0, 0);
-  grd.addColorStop(0,"blue");
-  grd.addColorStop(1,"#FF4F59");
+  //Events
 
-  ctx.fillStyle= grd;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-  var presetRed = 1;
-  var presetGreen = 1;
-  var presetBlue = 1;
-  var presetGradient = 0;
+  document.getElementById('capture').addEventListener('click', function(e) {
+    handleColors();
+  });
 
   document.getElementById('preset-red').addEventListener('change', function() {
     presetRed = this.value;
@@ -98,8 +109,20 @@ function getColor(range) {
     handleColors();
   });
 
+  document.getElementById('preset-gradient-color-0').addEventListener('blur', function() {
+    presetGradientColor0 = this.value;
+    console.log(this.value);
+    handleColors();
+  });
+
+  document.getElementById('preset-gradient-color-1').addEventListener('blur', function() {
+    presetGradientColor1 = this.value;
+    handleColors();
+  });
+
+
   function handleColors() {
-    getCapture(presetRed, presetGreen, presetBlue, presetGradient);
+    getCapture(presetRed, presetGreen, presetBlue, presetGradient, presetGradientColor0, presetGradientColor1);
   }
 
   function setRgb(pixels, pr = 1, pg = 1, pb = 1) {
@@ -117,7 +140,20 @@ function getColor(range) {
     return pixels;
   };
 
-function getCapture(red, green, blue, gradient) {
+
+  function getColor(range, color1 = "blue", color2 = "red") {
+    ctx.globalCompositeOperation = "overlay";
+    range = range ? parseInt(range) : 0;
+    var grd = ctx.createRadialGradient(range, range, canvas.width, range, 0, 0);
+
+    grd.addColorStop(0, color1);
+    grd.addColorStop(1, color2);
+
+    ctx.fillStyle= grd;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+function getCapture(red, green, blue, gradientPosition, gcolor1, gcolor2) {
 
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -130,7 +166,7 @@ function getCapture(red, green, blue, gradient) {
 
   ctx.putImageData(imgData, 0, 0);
 
-  getColor(gradient);
+  getColor(gradientPosition, gcolor1, gcolor2);
 }
 
 </script>
